@@ -1,0 +1,35 @@
+{
+  "name": "webgl-shader",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/webgl-shader.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/webgl-shader.js"
+    },
+    "./retro": {
+      "types": "./dist/retro/index.d.ts",
+      "default": "./dist/retro/index.js"
+    },
+    "./ascii": {
+      "types": "./dist/ascii/index.d.ts",
+      "default": "./dist/ascii/index.js"
+    }
+  },
+  "scripts": {
+    "build": "vite build && tsc --emitDeclarationOnly --outDir dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "webgl-core": "*"
+  },
+  "dependencies": {
+    "webgl-core": "file:../webgl-core"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "vite": "^5.2.0"
+  }
+}

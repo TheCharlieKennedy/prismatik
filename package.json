@@ -1,0 +1,9 @@
+{
+  "name": "prismatik",
+  "private": true,
+  "workspaces": [
+    "webgl-core",
+    "webgl-utils",
+    "webgl-shader"
+  ]
+}

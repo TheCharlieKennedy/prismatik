@@ -1,0 +1,43 @@
+{
+  "name": "webgl-core",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/webgl-core.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/webgl-core.js"
+    },
+    "./context": {
+      "types": "./dist/context.d.ts",
+      "default": "./dist/context.js"
+    },
+    "./step": {
+      "types": "./dist/step.d.ts",
+      "default": "./dist/step.js"
+    },
+    "./shader": {
+      "types": "./dist/shader.d.ts",
+      "default": "./dist/shader.js"
+    },
+    "./maths": {
+      "types": "./dist/maths.d.ts",
+      "default": "./dist/maths.js"
+    },
+    "./texture": {
+      "types": "./dist/texture.d.ts",
+      "default": "./dist/texture.js"
+    }
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && tsc --emitDeclarationOnly --outDir dist",
+    "build:demo": "vite build --config vite.demo.config.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "vite": "^5.2.0"
+  }
+}
