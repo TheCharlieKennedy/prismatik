@@ -1,13 +1,13 @@
 {
-  "name": "webgl-shader",
+  "name": "prismatik-shader",
   "version": "0.1.0",
   "type": "module",
-  "main": "./dist/webgl-shader.js",
+  "main": "./dist/prismatik-shader.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "default": "./dist/webgl-shader.js"
+      "default": "./dist/prismatik-shader.js"
     },
     "./retro": {
       "types": "./dist/retro/index.d.ts",
@@ -23,10 +23,10 @@
     "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
-    "webgl-core": "*"
+    "prismatik-core": "*"
   },
   "dependencies": {
-    "webgl-core": "file:../webgl-core"
+    "prismatik-core": "file:../prismatik-core"
   },
   "devDependencies": {
     "typescript": "^5.4.0",

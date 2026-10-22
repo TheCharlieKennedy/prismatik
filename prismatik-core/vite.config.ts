@@ -8,8 +8,8 @@ export default defineConfig(({ command }) => ({
     emptyOutDir: true,
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
-      name: 'WebGLCore',
-      fileName: 'webgl-core',
+      name: 'PrismatikCore',
+      fileName: 'prismatik-core',
       formats: ['es']
     }
   }

@@ -1,13 +1,13 @@
 {
-  "name": "webgl-core",
+  "name": "prismatik-core",
   "version": "0.1.0",
   "type": "module",
-  "main": "./dist/webgl-core.js",
+  "main": "./dist/prismatik-core.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "default": "./dist/webgl-core.js"
+      "default": "./dist/prismatik-core.js"
     },
     "./context": {
       "types": "./dist/context.d.ts",

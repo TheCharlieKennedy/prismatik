@@ -12,7 +12,7 @@ export default defineConfig({
       formats: ['es']
     },
     rollupOptions: {
-      external: ['webgl-core']
+      external: ['prismatik-core']
     }
   }
 })

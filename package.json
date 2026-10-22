@@ -2,8 +2,11 @@
   "name": "prismatik",
   "private": true,
   "workspaces": [
-    "webgl-core",
-    "webgl-utils",
-    "webgl-shader"
-  ]
+    "prismatik-core",
+    "prismatik-utils",
+    "prismatik-shader"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace=prismatik-core && npm run build --workspace=prismatik-utils && npm run build --workspace=prismatik-shader"
+  }
 }

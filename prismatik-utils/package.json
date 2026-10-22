@@ -1,13 +1,13 @@
 {
-  "name": "webgl-utils",
+  "name": "prismatik-utils",
   "version": "0.1.0",
   "type": "module",
-  "main": "./dist/webgl-utils.js",
+  "main": "./dist/prismatik-utils.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "default": "./dist/webgl-utils.js"
+      "default": "./dist/prismatik-utils.js"
     },
     "./orbit": {
       "types": "./dist/orbit.d.ts",
@@ -31,10 +31,10 @@
     "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
-    "webgl-core": "*"
+    "prismatik-core": "*"
   },
   "dependencies": {
-    "webgl-core": "file:../webgl-core"
+    "prismatik-core": "file:../prismatik-core"
   },
   "devDependencies": {
     "typescript": "^5.4.0",

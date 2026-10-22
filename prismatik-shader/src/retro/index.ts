@@ -1,4 +1,4 @@
-import type { ShaderImpl } from 'webgl-core'
+import type { ShaderImpl } from 'prismatik-core'
 
 export interface RetroShaderConfig {
   affineTextureMapping: boolean

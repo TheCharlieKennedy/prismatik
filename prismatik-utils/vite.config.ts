@@ -5,12 +5,12 @@ export default defineConfig({
   build: {
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
-      name: 'WebGLUtils',
-      fileName: 'webgl-utils',
+      name: 'PrismatikUtils',
+      fileName: 'prismatik-utils',
       formats: ['es']
     },
     rollupOptions: {
-      external: ['webgl-core']
+      external: ['prismatik-core']
     }
   }
 })

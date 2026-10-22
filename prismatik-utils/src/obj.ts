@@ -1,4 +1,4 @@
-import { createVBO, loadTexture, makeSolidTexture } from 'webgl-core'
+import { createVBO, loadTexture, makeSolidTexture } from 'prismatik-core'
 
 export interface ObjMesh {
   vbo: ReturnType<typeof createVBO>
