@@ -1,7 +1,7 @@
 export { createContext, resizeToPixelRatio } from './context'
 export { createRenderStep } from './step'
 export { compileShader, swapShader } from './shader'
-export { createVBO, mat4Multiply, perspective, rotationX, rotationY, translation, makeCuboid } from './maths'
+export { createVBO, mat4Multiply, perspective, rotationX, rotationY, translation, scale } from './maths'
 export { loadTexture, makeSolidTexture, makeCheckerTexture } from './texture'
 export type { ShaderImpl, ShaderProgram, UniformMap } from './types'
 export type { VBO } from './maths'

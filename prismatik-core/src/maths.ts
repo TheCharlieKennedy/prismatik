@@ -71,26 +71,9 @@ export function translation(x: number, y: number, z: number): Float32Array {
   return m
 }
 
-export function makeCuboid(hw: number, hh: number, hd: number): Float32Array {
-  const w = hw, h = hh, d = hd
-  return new Float32Array([
-    // front
-    -w,-h, d,  0,0,   w,-h, d,  1,0,   w, h, d,  1,1,
-    -w,-h, d,  0,0,   w, h, d,  1,1,  -w, h, d,  0,1,
-    // back
-     w,-h,-d,  0,0,  -w,-h,-d,  1,0,  -w, h,-d,  1,1,
-     w,-h,-d,  0,0,  -w, h,-d,  1,1,   w, h,-d,  0,1,
-    // left
-    -w,-h,-d,  0,0,  -w,-h, d,  1,0,  -w, h, d,  1,1,
-    -w,-h,-d,  0,0,  -w, h, d,  1,1,  -w, h,-d,  0,1,
-    // right
-     w,-h, d,  0,0,   w,-h,-d,  1,0,   w, h,-d,  1,1,
-     w,-h, d,  0,0,   w, h,-d,  1,1,   w, h, d,  0,1,
-    // top
-    -w, h, d,  0,0,   w, h, d,  1,0,   w, h,-d,  1,1,
-    -w, h, d,  0,0,   w, h,-d,  1,1,  -w, h,-d,  0,1,
-    // bottom
-    -w,-h,-d,  0,0,   w,-h,-d,  1,0,   w,-h, d,  1,1,
-    -w,-h,-d,  0,0,   w,-h, d,  1,1,  -w,-h, d,  0,1,
-  ])
+export function scale(x: number, y: number, z: number): Float32Array {
+  const m = new Float32Array(16)
+  m[0] = x; m[5] = y; m[10] = z; m[15] = 1
+  return m
 }
+

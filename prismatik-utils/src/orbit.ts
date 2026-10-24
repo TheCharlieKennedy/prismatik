@@ -1,3 +1,6 @@
+import { createDragControl } from './drag'
+import { createAutoRotate } from './autoRotate'
+
 export interface OrbitControl {
   getAngles(): { rotX: number; rotY: number }
   tick(dt: number): void
@@ -42,8 +45,7 @@ function qToMatrix(q: Float32Array): Float32Array {
 }
 
 export function createOrbitControl(
-  canvas: HTMLCanvasElement,
-  overlay: HTMLCanvasElement,
+  el: HTMLElement,
   config: OrbitConfig = {}
 ): OrbitControl {
   const {
@@ -53,96 +55,48 @@ export function createOrbitControl(
   } = config
 
   let q = qFromAxisAngle(1, 0, 0, -0.3)
-  let autoSpin = true
-  let resumeTimer: ReturnType<typeof setTimeout> | null = null
 
-  let dragActive = false
-  let lastX = 0
-  let lastY = 0
-  let dragMoved = false
+  const autoRotate = createAutoRotate({ speed: autoSpinSpeed, resumeDelay: autoSpinResumeDelay })
 
-  function pauseSpin() {
-    autoSpin = false
-    if (resumeTimer !== null) clearTimeout(resumeTimer)
-    resumeTimer = setTimeout(() => { autoSpin = true }, autoSpinResumeDelay)
-  }
-
-  function applyDelta(dx: number, dy: number) {
+  const drag = createDragControl(el, (dx, dy) => {
     const qY = qFromAxisAngle(0, 1, 0, dx * sensitivity)
     const qX = qFromAxisAngle(1, 0, 0, dy * sensitivity)
     q = qNorm(qMul(qY, qMul(qX, q)))
-  }
-
-  function onMouseDown(e: MouseEvent) {
-    dragActive = true; lastX = e.clientX; lastY = e.clientY; dragMoved = false; pauseSpin()
-  }
-
-  function onMouseMove(e: MouseEvent) {
-    if (!dragActive) return
-    const dx = e.clientX - lastX, dy = e.clientY - lastY
-    if (Math.abs(dx) > 2 || Math.abs(dy) > 2) { applyDelta(dx, dy); dragMoved = true }
-    lastX = e.clientX; lastY = e.clientY; pauseSpin()
-  }
-
-  function onMouseUp() { dragActive = false }
-
-  function onTouchStart(e: TouchEvent) {
-    if (e.touches.length !== 1) return
-    e.preventDefault()
-    lastX = e.touches[0].clientX; lastY = e.touches[0].clientY
-    dragActive = true; dragMoved = false; pauseSpin()
-  }
-
-  function onTouchMove(e: TouchEvent) {
-    if (!dragActive || e.touches.length !== 1) return
-    const dx = e.touches[0].clientX - lastX, dy = e.touches[0].clientY - lastY
-    if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
-      e.preventDefault()
-      applyDelta(dx, dy)
-      lastX = e.touches[0].clientX; lastY = e.touches[0].clientY
-      dragMoved = true; pauseSpin()
-    }
-  }
-
-  function onTouchEnd() { dragActive = false }
+    autoRotate.pause(autoSpinResumeDelay)
+  }, { sensitivity: 1, threshold: 2 })
 
   const ARROW_SPEED = 0.04
+
   function onKeyDown(e: KeyboardEvent) {
-    if (e.key === 'ArrowLeft')  { applyDelta(-ARROW_SPEED / sensitivity, 0); pauseSpin() }
-    if (e.key === 'ArrowRight') { applyDelta( ARROW_SPEED / sensitivity, 0); pauseSpin() }
-    if (e.key === 'ArrowUp')    { applyDelta(0, -ARROW_SPEED / sensitivity); pauseSpin() }
-    if (e.key === 'ArrowDown')  { applyDelta(0,  ARROW_SPEED / sensitivity); pauseSpin() }
+    const applyDelta = (dx: number, dy: number) => {
+      const qY = qFromAxisAngle(0, 1, 0, dx * sensitivity)
+      const qX = qFromAxisAngle(1, 0, 0, dy * sensitivity)
+      q = qNorm(qMul(qY, qMul(qX, q)))
+    }
+    if (e.key === 'ArrowLeft')  { applyDelta(-ARROW_SPEED / sensitivity, 0); autoRotate.pause() }
+    if (e.key === 'ArrowRight') { applyDelta( ARROW_SPEED / sensitivity, 0); autoRotate.pause() }
+    if (e.key === 'ArrowUp')    { applyDelta(0, -ARROW_SPEED / sensitivity); autoRotate.pause() }
+    if (e.key === 'ArrowDown')  { applyDelta(0,  ARROW_SPEED / sensitivity); autoRotate.pause() }
   }
 
-  overlay.addEventListener('mousedown', onMouseDown)
-  window.addEventListener('mousemove', onMouseMove)
-  window.addEventListener('mouseup', onMouseUp)
-  overlay.addEventListener('touchstart', onTouchStart, { passive: false })
-  overlay.addEventListener('touchmove', onTouchMove, { passive: false })
-  overlay.addEventListener('touchend', onTouchEnd)
   window.addEventListener('keydown', onKeyDown)
-
   document.body.classList.add('no-scroll')
 
   return {
-    wasDragging() { const was = dragMoved; dragMoved = false; return was },
+    wasDragging() { return drag.wasDragging() },
     getAngles() { return { rotX: 0, rotY: 0 } },
-    tick(dt: number) {
-      if (autoSpin) {
-        const qSpin = qFromAxisAngle(0, 1, 0, autoSpinSpeed * Math.min(dt, 0.1))
+    tick(dt) {
+      const delta = autoRotate.tick(dt)
+      if (delta > 0) {
+        const qSpin = qFromAxisAngle(0, 1, 0, delta)
         q = qNorm(qMul(qSpin, q))
       }
     },
     getMatrix() { return qToMatrix(q) },
     dispose() {
-      overlay.removeEventListener('mousedown', onMouseDown)
-      window.removeEventListener('mousemove', onMouseMove)
-      window.removeEventListener('mouseup', onMouseUp)
-      overlay.removeEventListener('touchstart', onTouchStart)
-      overlay.removeEventListener('touchmove', onTouchMove)
-      overlay.removeEventListener('touchend', onTouchEnd)
+      drag.dispose()
+      autoRotate.dispose()
       window.removeEventListener('keydown', onKeyDown)
-      if (resumeTimer !== null) clearTimeout(resumeTimer)
       document.body.classList.remove('no-scroll')
     }
   }

@@ -24,6 +24,26 @@
     "./obj": {
       "types": "./dist/obj.d.ts",
       "default": "./dist/obj.js"
+    },
+    "./highlight": {
+      "types": "./dist/highlight.d.ts",
+      "default": "./dist/highlight.js"
+    },
+    "./overlay": {
+      "types": "./dist/overlay.d.ts",
+      "default": "./dist/overlay.js"
+    },
+    "./drag": {
+      "types": "./dist/drag.d.ts",
+      "default": "./dist/drag.js"
+    },
+    "./autoRotate": {
+      "types": "./dist/autoRotate.d.ts",
+      "default": "./dist/autoRotate.js"
+    },
+    "./geometry": {
+      "types": "./dist/geometry.d.ts",
+      "default": "./dist/geometry.js"
     }
   },
   "scripts": {
