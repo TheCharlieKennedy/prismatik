@@ -94,7 +94,7 @@ const MENU_W_CSS = 320
 const MENU_ITEM_H_CSS = 68
 const MENU_PAD_X_CSS = 36
 const MENU_PAD_Y_CSS = 20
-const MENU_FONT_CSS = 22
+const MENU_FONT_CSS = 19
 const MENU_RADIUS_CSS = 10
 
 export function createPauseMenu(config: MenuConfig, overlay: HTMLCanvasElement): PauseMenu {
@@ -177,18 +177,19 @@ export function createPauseMenu(config: MenuConfig, overlay: HTMLCanvasElement):
     const swatchSize = 28 * d
 
     const rowY = menuY + padY + rowIndex * itemH
-    const listY = rowY + itemH
 
     if (cols > 1) {
       const rows = Math.ceil(item.options.length / cols)
       const gridW = cols * swatchSize + (cols - 1) * gap
       const gridH = rows * swatchSize + (rows - 1) * gap
       const gridX = menuX + (menuW - gridW) / 2
+      const listY = rowY
       return { d, cols, gap, cellSize: swatchSize, rows, listX: gridX, listY, listW: gridW, listH: gridH }
     } else {
       const listW = menuW
       const listH = item.options.length * itemH
       const listX = menuX
+      const listY = rowY
       return { d, cols, gap, cellSize: itemH, rows: item.options.length, listX, listY, listW, listH }
     }
   }
@@ -242,13 +243,26 @@ export function createPauseMenu(config: MenuConfig, overlay: HTMLCanvasElement):
         ctx.fillStyle = '#aaaaaa'
         ctx.font = `${MENU_FONT_CSS * d}px monospace`
         ctx.textBaseline = 'middle'
-        ctx.fillText(item.label, menuX + padX, itemY + itemH / 2)
+
+        // Truncate label with ellipsis if it would collide with the right-aligned value
+        const valueX = menuX + menuW - padX
+        const labelX = menuX + padX
+        const maxLabelW = valueX - labelX - 16 * d
+        let label = item.label
+        if (ctx.measureText(label).width > maxLabelW) {
+          while (label.length > 0 && ctx.measureText(label + '…').width > maxLabelW) {
+            label = label.slice(0, -1)
+          }
+          label = label + '…'
+        }
+        ctx.fillText(label, labelX, itemY + itemH / 2)
 
         // Draw current value right-aligned
-        const valueX = menuX + menuW - padX
         if (item.renderValue) {
           item.renderValue(ctx, item.value, valueX, itemY, itemH, d)
         } else {
+          const accentColor = (config.items.find(it => it.type === 'color') as ColorItem | undefined)?.value ?? '#ffffff'
+          ctx.fillStyle = accentColor
           ctx.textAlign = 'right'
           ctx.fillText(item.value, valueX, itemY + itemH / 2)
           ctx.textAlign = 'left'
@@ -281,6 +295,13 @@ export function createPauseMenu(config: MenuConfig, overlay: HTMLCanvasElement):
           if (openDropdown!.renderOption) {
             openDropdown!.renderOption(ctx, option, ox, oy, cellSize, d)
           } else {
+            // Single-column: draw a background row box
+            const isSelected = option.value === openDropdown!.value
+            ctx.fillStyle = isSelected ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.04)'
+            ctx.beginPath()
+            ctx.roundRect(ox, oy, listW, cellSize, 3 * d)
+            ctx.fill()
+
             ctx.fillStyle = '#aaaaaa'
             ctx.font = `${MENU_FONT_CSS * d}px monospace`
             ctx.textBaseline = 'middle'
@@ -292,7 +313,8 @@ export function createPauseMenu(config: MenuConfig, overlay: HTMLCanvasElement):
             ctx.strokeStyle = '#ffffff'
             ctx.lineWidth = 2 * d
             ctx.beginPath()
-            ctx.roundRect(ox, oy, cellSize, cellSize, 3 * d)
+            const highlightW = cols > 1 ? cellSize : listW
+            ctx.roundRect(ox, oy, highlightW, cellSize, 3 * d)
             ctx.stroke()
           }
         })
@@ -326,7 +348,8 @@ export function createPauseMenu(config: MenuConfig, overlay: HTMLCanvasElement):
       const row = cols > 1 ? Math.floor(oi / cols) : oi
       const ox = listX + col * (cellSize + gap)
       const oy = listY + row * (cellSize + gap)
-      if (cx >= ox && cx <= ox + cellSize && cy >= oy && cy <= oy + cellSize) {
+      const hitW = cols > 1 ? cellSize : listW
+      if (cx >= ox && cx <= ox + hitW && cy >= oy && cy <= oy + cellSize) {
         return item.options[oi].value
       }
     }
