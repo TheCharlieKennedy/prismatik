@@ -86,6 +86,7 @@ export interface PauseMenu {
   isOpen(): boolean
   render(): void
   handleInput(e: KeyboardEvent): boolean
+  btnEl: HTMLDivElement
 }
 
 const BTN_SIZE_CSS = 80
@@ -480,6 +481,7 @@ export function createPauseMenu(config: MenuConfig, overlay: HTMLCanvasElement):
       if (!open) return false
       if (e.key === 'Escape') { close(); return true }
       return false
-    }
+    },
+    btnEl: btnDiv,
   }
 }
