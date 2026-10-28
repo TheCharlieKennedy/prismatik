@@ -9,6 +9,7 @@ export interface DropdownItem {
   value: string
   options: DropdownOption[]
   columns?: number
+  visible?: boolean
   onChange(value: string): void
   renderOption?: (ctx: CanvasRenderingContext2D, option: DropdownOption, x: number, y: number, size: number, dpr: number) => void
   renderValue?: (ctx: CanvasRenderingContext2D, value: string, x: number, y: number, size: number, dpr: number) => void
@@ -67,6 +68,7 @@ export interface MenuConfig {
 export interface MenuItem {
   type?: 'button'
   label: string
+  visible?: boolean
   onSelect(): void
 }
 
@@ -77,6 +79,7 @@ export interface SliderItem {
   max: number
   step: number
   value: number
+  visible?: boolean
   onChange(value: number): void
 }
 
@@ -86,7 +89,6 @@ export interface PauseMenu {
   isOpen(): boolean
   render(): void
   handleInput(e: KeyboardEvent): boolean
-  btnEl: HTMLDivElement
 }
 
 const BTN_SIZE_CSS = 80
@@ -105,20 +107,11 @@ export function createPauseMenu(config: MenuConfig, overlay: HTMLCanvasElement):
 
   const ctx = overlay.getContext('2d')!
 
-  // Transparent div sits over the button region only — always clickable, never blocks the shelf
-  const btnDiv = document.createElement('div')
-  btnDiv.style.cssText = [
-    'position:absolute',
-    `top:${BTN_MARGIN_CSS}px`,
-    `right:${BTN_MARGIN_CSS}px`,
-    `width:${BTN_SIZE_CSS}px`,
-    `height:${BTN_SIZE_CSS}px`,
-    'cursor:pointer',
-    'z-index:20',
-  ].join(';')
-  overlay.parentElement?.appendChild(btnDiv)
-
   function dpr() { return window.devicePixelRatio ?? 1 }
+
+  function visibleItems() {
+    return config.items.filter(item => item.visible !== false)
+  }
 
   function menuDims() {
     const d = dpr()
@@ -126,7 +119,7 @@ export function createPauseMenu(config: MenuConfig, overlay: HTMLCanvasElement):
     const padX = MENU_PAD_X_CSS * d
     const padY = MENU_PAD_Y_CSS * d
     const menuW = MENU_W_CSS * d
-    const menuH = padY * 2 + config.items.length * itemH
+    const menuH = padY * 2 + visibleItems().length * itemH
     const menuX = (overlay.width - menuW) / 2
     const menuY = (overlay.height - menuH) / 2
     return { d, itemH, padX, padY, menuW, menuH, menuX, menuY }
@@ -212,7 +205,7 @@ export function createPauseMenu(config: MenuConfig, overlay: HTMLCanvasElement):
     ctx.roundRect(menuX, menuY, menuW, menuH, MENU_RADIUS_CSS * d)
     ctx.fill()
 
-    config.items.forEach((item, i) => {
+    visibleItems().forEach((item, i) => {
       const itemY = menuY + padY + i * itemH
 
       if (item.type === 'slider') {
@@ -278,7 +271,7 @@ export function createPauseMenu(config: MenuConfig, overlay: HTMLCanvasElement):
 
     // Draw open dropdown list on top of everything else
     if (openDropdown) {
-      const dropIndex = config.items.indexOf(openDropdown as MenuItem | SliderItem | DropdownItem | ColorItem)
+      const dropIndex = visibleItems().indexOf(openDropdown as MenuItem | SliderItem | DropdownItem | ColorItem)
       if (dropIndex !== -1) {
         const { d, cols, gap, cellSize, listX, listY, listW, listH } = dropdownListDims(openDropdown, dropIndex)
 
@@ -306,7 +299,16 @@ export function createPauseMenu(config: MenuConfig, overlay: HTMLCanvasElement):
             ctx.fillStyle = '#aaaaaa'
             ctx.font = `${MENU_FONT_CSS * d}px monospace`
             ctx.textBaseline = 'middle'
-            ctx.fillText(option.label, ox + MENU_PAD_X_CSS * d, oy + cellSize / 2)
+            const optLabelX = ox + MENU_PAD_X_CSS * d
+            const maxOptLabelW = listW - MENU_PAD_X_CSS * d - 16 * d
+            let optLabel = option.label
+            if (ctx.measureText(optLabel).width > maxOptLabelW) {
+              while (optLabel.length > 0 && ctx.measureText(optLabel + '…').width > maxOptLabelW) {
+                optLabel = optLabel.slice(0, -1)
+              }
+              optLabel = optLabel + '…'
+            }
+            ctx.fillText(optLabel, optLabelX, oy + cellSize / 2)
           }
 
           // Highlight selected option
@@ -334,7 +336,8 @@ export function createPauseMenu(config: MenuConfig, overlay: HTMLCanvasElement):
   function hitTestItem(cx: number, cy: number): number {
     const { itemH, padY, menuW, menuH, menuX, menuY } = menuDims()
     if (cx < menuX || cx > menuX + menuW || cy < menuY || cy > menuY + menuH) return -1
-    for (let i = 0; i < config.items.length; i++) {
+    const vis = visibleItems()
+    for (let i = 0; i < vis.length; i++) {
       const itemY = menuY + padY + i * itemH
       if (cy >= itemY && cy <= itemY + itemH) return i
     }
@@ -362,7 +365,8 @@ export function createPauseMenu(config: MenuConfig, overlay: HTMLCanvasElement):
 
     // If a dropdown is open, check its list first
     if (openDropdown) {
-      const dropIndex = config.items.indexOf(openDropdown as MenuItem | SliderItem | DropdownItem | ColorItem)
+      const vis = visibleItems()
+      const dropIndex = vis.indexOf(openDropdown as MenuItem | SliderItem | DropdownItem | ColorItem)
       const hit = dropIndex !== -1 ? hitTestDropdown(openDropdown, cx, cy, dropIndex) : null
       if (hit !== null) {
         openDropdown.value = hit
@@ -378,7 +382,7 @@ export function createPauseMenu(config: MenuConfig, overlay: HTMLCanvasElement):
         draw()
         if (i === -1) { close(); return }
         // Fall through to handle whatever was clicked
-        const item = config.items[i]
+        const item = vis[i]
         if (item.type === 'slider') {
           draggingSlider = item
           applySliderCx(item, cx, i)
@@ -397,9 +401,10 @@ export function createPauseMenu(config: MenuConfig, overlay: HTMLCanvasElement):
       return
     }
 
+    const vis = visibleItems()
     const i = hitTestItem(cx, cy)
     if (i === -1) { close(); return }
-    const item = config.items[i]
+    const item = vis[i]
     if (item.type === 'slider') {
       draggingSlider = item
       applySliderCx(item, cx, i)
@@ -415,7 +420,7 @@ export function createPauseMenu(config: MenuConfig, overlay: HTMLCanvasElement):
   function onPointerMove(clientX: number, clientY: number) {
     if (!draggingSlider) return
     const { cx } = canvasCoords(clientX, clientY)
-    const i = config.items.indexOf(draggingSlider as MenuItem | SliderItem | DropdownItem | ColorItem)
+    const i = visibleItems().indexOf(draggingSlider as MenuItem | SliderItem | DropdownItem | ColorItem)
     if (i !== -1) applySliderCx(draggingSlider, cx, i)
   }
 
@@ -428,10 +433,8 @@ export function createPauseMenu(config: MenuConfig, overlay: HTMLCanvasElement):
   function onTouchMove(e: TouchEvent) { e.preventDefault(); onPointerMove(e.touches[0].clientX, e.touches[0].clientY) }
   function onTouchEnd() { onPointerUp() }
 
-  // overlay only receives events when menu is open
-  overlay.style.pointerEvents = 'none'
-
   function attachOverlayListeners() {
+    overlay.style.pointerEvents = 'auto'
     overlay.addEventListener('mousedown', onMouseDown)
     overlay.addEventListener('touchstart', onTouchStart, { passive: false })
     window.addEventListener('mousemove', onMouseMove)
@@ -441,6 +444,7 @@ export function createPauseMenu(config: MenuConfig, overlay: HTMLCanvasElement):
   }
 
   function detachOverlayListeners() {
+    overlay.style.pointerEvents = 'none'
     overlay.removeEventListener('mousedown', onMouseDown)
     overlay.removeEventListener('touchstart', onTouchStart)
     window.removeEventListener('mousemove', onMouseMove)
@@ -449,19 +453,48 @@ export function createPauseMenu(config: MenuConfig, overlay: HTMLCanvasElement):
     window.removeEventListener('touchend', onTouchEnd)
   }
 
-  btnDiv.addEventListener('click', () => {
-    if (!config.enabled) return
-    open = true
-    overlay.style.pointerEvents = 'auto'
-    attachOverlayListeners()
-    draw()
-  })
+  // When closed, pointer-events is none so the overlay is transparent to the shelf.
+  // A document-level listener watches for clicks/touches in the button region and opens the menu.
+  function isInButtonRegion(clientX: number, clientY: number): boolean {
+    if (!config.enabled) return false
+    const rect = overlay.getBoundingClientRect()
+    const x = clientX - rect.left
+    const y = clientY - rect.top
+    const btnRight = rect.width - BTN_MARGIN_CSS
+    const btnTop = BTN_MARGIN_CSS
+    return x >= btnRight - BTN_SIZE_CSS && x <= btnRight && y >= btnTop && y <= btnTop + BTN_SIZE_CSS
+  }
+
+  function onDocMouseDown(e: MouseEvent) {
+    if (open) return
+    if (isInButtonRegion(e.clientX, e.clientY)) {
+      e.stopPropagation()
+      open = true
+      attachOverlayListeners()
+      draw()
+    }
+  }
+
+  function onDocTouchStart(e: TouchEvent) {
+    if (open) return
+    if (isInButtonRegion(e.touches[0].clientX, e.touches[0].clientY)) {
+      e.preventDefault()
+      e.stopPropagation()
+      open = true
+      attachOverlayListeners()
+      draw()
+    }
+  }
+
+  // Start with pointer-events none so the shelf below is fully interactive
+  overlay.style.pointerEvents = 'none'
+  document.addEventListener('mousedown', onDocMouseDown, { capture: true })
+  document.addEventListener('touchstart', onDocTouchStart, { capture: true, passive: false })
 
   function close() {
     open = false
     draggingSlider = null
     openDropdown = null
-    overlay.style.pointerEvents = 'none'
     detachOverlayListeners()
     draw()
   }
@@ -470,7 +503,6 @@ export function createPauseMenu(config: MenuConfig, overlay: HTMLCanvasElement):
     open() {
       if (!config.enabled) return
       open = true
-      overlay.style.pointerEvents = 'auto'
       attachOverlayListeners()
       draw()
     },
@@ -482,6 +514,5 @@ export function createPauseMenu(config: MenuConfig, overlay: HTMLCanvasElement):
       if (e.key === 'Escape') { close(); return true }
       return false
     },
-    btnEl: btnDiv,
   }
 }
